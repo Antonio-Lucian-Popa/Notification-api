@@ -1,14 +1,12 @@
-# Folosim o imagine de bază cu OpenJDK 17
-FROM openjdk:17-jdk-slim
-
-# Setăm un director de lucru
+# Stage 1: Construiește fișierul JAR
+FROM maven:3.8.4-openjdk-17 AS build
 WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-# Copiem JAR-ul construit în container
-COPY target/notification-api-0.0.1-SNAPSHOT.jar notification-service.jar
-
-# Expunem portul 8080 (sau alt port pe care rulează serviciul)
-EXPOSE 8080
-
-# Comanda de rulare a aplicației
+# Stage 2: Creează imaginea finală
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY --from=build /app/target/notification-api-0.0.1-SNAPSHOT.jar notification-service.jar
+EXPOSE 8082
 ENTRYPOINT ["java", "-jar", "notification-service.jar"]
